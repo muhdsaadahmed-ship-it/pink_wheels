@@ -138,9 +138,9 @@
           <!-- Request Button -->
           <button
             @click="handleRequestRide"
-            :disabled="!canRequest || isSubmitting"
-            class="w-full py-3.5 px-4 rounded-xl text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
-            :class="canRequest && !isSubmitting ? 'bg-[#174C43] hover:bg-[#113932] cursor-pointer' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
+            :disabled="isSubmitting"
+            class="w-full py-3.5 px-4 rounded-xl text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer bg-[#174C43] hover:bg-[#113932] active:scale-[0.98]"
+            :class="isSubmitting ? 'opacity-70 cursor-wait' : ''"
           >
             <span v-if="isSubmitting">Processing Queue & Matchmaking...</span>
             <span v-else>Request Ride Now 🛵</span>
@@ -281,18 +281,22 @@ watch([pickupCoords, destCoords, vehicleType], () => {
 }, { deep: true })
 
 async function handleRequestRide() {
-  if (!canRequest.value) return
+  if (isSubmitting.value) return
   isSubmitting.value = true
+
+  // Ensure pickup and destination coordinates exist (use presets as fallback)
+  const pickup = pickupCoords.value || { lat: PRESET_LOCATIONS[0].lat, lon: PRESET_LOCATIONS[0].lon, label: PRESET_LOCATIONS[0].label }
+  const dest = destCoords.value || { lat: PRESET_LOCATIONS[1].lat, lon: PRESET_LOCATIONS[1].lon, label: PRESET_LOCATIONS[1].label }
 
   try {
     const res = await requestRide({
       passenger_id: 1, // Demo Fatima Noor
-      pickup_location: pickupText.value || 'Selected Pickup',
-      destination: destText.value || 'Selected Destination',
-      pickup_latitude: pickupCoords.value.lat,
-      pickup_longitude: pickupCoords.value.lon,
-      destination_latitude: destCoords.value.lat,
-      destination_longitude: destCoords.value.lon,
+      pickup_location: pickupText.value || pickup.label || 'Saddar Empress Market',
+      destination: destText.value || dest.label || 'Clifton Beach / Seaview',
+      pickup_latitude: pickup.lat,
+      pickup_longitude: pickup.lon,
+      destination_latitude: dest.lat,
+      destination_longitude: dest.lon,
       vehicle_type: vehicleType.value,
     })
 
